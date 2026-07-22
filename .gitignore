@@ -1,0 +1,31 @@
+# Model files & weights (anywhere in the project)
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+*.pkl
+*.jar
+*.zip
+*.tar.gz
+
+# Checkpoints and optimizer states
+**/checkpoint-*/
+checkpoint-*/
+optimizer.pt
+**/optimizer.pt
+
+# Data & Model folders (including nested ones)
+**/data/
+**/model/
+**/model_imbalanced/
+**/model_imbalanced_tokenizer/
+
+# Python caching
+**/__pycache__/
+*.pyc
+
+# IDEs & System files
+.vscode/
+.idea/
+.DS_Store
