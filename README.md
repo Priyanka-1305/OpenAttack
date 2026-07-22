@@ -1,39 +1,68 @@
-﻿# NLP Adversarial Attacks and Defenses Benchmark
+﻿# OpenAttack: An Open-Source Framework for Textual Adversarial Attack
 
-This repository contains a comprehensive suite of experiments and evaluations for **Adversarial Attacks and Defense Mechanisms on Deep Learning NLP Classifiers**. The project utilizes the **OpenAttack** adversarial attack framework, along with Hugging Face **Transformers** (BERT, RoBERTa, and ELECTRA) to evaluate model robustness and benchmark various state-of-the-art text defense strategies.
+This repository contains the code, notebooks, and benchmarks for our research project on adversarial robustness in NLP, focusing on the evaluation of baseline and novel attacks and defenses.
+
+## 👥 Authors & Affiliation
+*   **Nidhi M** (231AI024) — `nidhim.231ai024@nitk.edu.in`
+*   **Priyanka Nitin Mohorikar** (231AI028) — `priyankanitinmohorikar.231ai028@nitk.edu.in`
+*   **Varshini Reddy** (231AI041) — `varshinireddy.231ai041@nitk.edu.in`
+*   **Advisor**: Dr. Anand Kumar M
+*   **Institution**: Department of Information Technology, NITK Surathkal
 
 ---
 
 ## 🔍 Overview of the Project
+We present a comprehensive adversarial robustness evaluation framework that integrates attack benchmarking, defense analysis, multilingual generalization, and a novel sentence-level adversarial attack named **TECA**.
 
-The core goal of this project is to evaluate how modern NLP text classifiers perform under adversarial perturbations (both character-level and word-level) and to measure the effectiveness of defense mechanisms designed to mitigate these attacks. 
+### 1. The Novel TECA (Sentence-level) Attack
+Unlike token-level perturbations (e.g., swapping words), **TECA** operates on syntactic and semantic transformations to construct semantically consistent but misleading sentences.
+*   **Transformations**:
+    *   Passive ↔ Active voice conversion
+    *   Clause insertion or expansion
+    *   Negation injection
+    *   Phrase reordering
+*   **Search Strategy**: Beam search is used to iteratively refine candidate sentences, optimizing the loss difference while enforcing a semantic similarity constraint ($Sim(x, x') \geq \delta$ via SBERT embeddings).
 
-### 1. Victim Models
-The project evaluates three popular transformer architectures:
-*   **BERT** (`bert-base-uncased`)
-*   **RoBERTa** (`roberta-base`)
-*   **ELECTRA** (`google/electra-base-discriminator`)
+### 2. Baseline Attacks Evaluated
+Using the **OpenAttack** toolkit, we benchmark:
+*   **TextFooler**: Word-level synonym substitution.
+*   **SCPN (Syntactically Controlled Paraphrase Networks)**: Syntactic structure perturbation.
+*   **GAN-based Attacks**: Generative adversarial perturbations.
+*   **DeepWordBug**: Character-level typos (used in defense analysis).
+*   **UAT (Universal Adversarial Triggers)**: Trigger sequences (used in defense analysis).
 
-### 2. Evaluated Adversarial Attacks (via OpenAttack)
-*   **TextFooler (`TextFoolerAttacker`)**: A word-level synonym substitution attack that uses word embeddings to find semantic-preserving replacements.
-*   **DeepWordBug (`DeepWordBugAttacker`)**: A character-level perturbation attack that introduces typos (insertions, deletions, substitutions, and swaps) to evade character-level spelling and word representations.
-*   **UAT (`UATAttacker`)**: Universal Adversarial Triggers that search for a short sequence of words which, when prepended to any input text, triggers a target misclassification.
-*   **SCPN (`SCPNAttacker`)**: Syntactically Controlled Paraphrase Networks that generate syntactic variations of input text to change the structure while keeping the meaning.
-*   **GAN (`GANAttacker`)**: Generative Adversarial Network-based text perturbations.
-
-### 3. Evaluated Defense Strategies
-*   **Attention Drop (`Atttention_drop/`)**: A defense technique where attention weights are dropped out during training/inference to enhance the model's robustness against spelling and word perturbations.
-*   **MaskPure (`bert_sst_maskpure_openattack.ipynb`)**: An implementation of the "Mask and Purify" defense framework. It masks highly vulnerable words and purifies/reconstructs the sentence using language models before passing it to the classifier.
-*   **Imbalanced Training Defenses (`defense+imbalanced.ipynb`)**: Explores how models trained on imbalanced datasets behave under adversarial attacks and benches techniques to improve their robustness.
+### 3. Evaluated Defense Mechanisms
+*   **MaskPure**: A stochastic purification layer applied during inference that randomly masks tokens and purifies them using a masked language model.
+*   **AttentionDrop**: A transformer regularization technique that randomly drops attention weights during training to distribute token influence.
+*   **Paraphrasing Defense**: A preprocessing step where a **T5** model generates 5 paraphrases of an input sentence. The model evaluates the 6 variants (5 paraphrases + 1 original) and averages the predictions.
 
 ---
 
-## 📊 Datasets Used
-*   **SST-2 (Stanford Sentiment Treebank)**: Sentiment classification on movie review snippets.
-*   **IMDB**: Binary sentiment classification on full-length movie reviews.
-*   **Spam, Ham & Phishing**: Binary classification for identifying malicious/spam emails.
-*   **Multiclass News**: Classification of news text into multiple distinct category labels.
-*   **Hindi Translation Dataset (`dataset-merged.csv`)**: Evaluates cross-lingual or translation-based attacks and defenses on Hindi text.
+## 📊 Datasets & Task Variants
+We benchmarked on diverse datasets spanning binary, multiclass, imbalanced, and multilingual settings:
+1.  **SST-2 (Binary Sentiment)**: Movie reviews with human annotations (70,042 entries).
+2.  **IMDb Reviews (Binary Sentiment)**: Highly polar, long movie reviews (50,000 entries).
+3.  **Mental Health Dataset (Imbalanced Multiclass)**: 127,241 entries with 13 emotion classes (where `Neutral` is 83%, other classes 13%, nulls removed).
+4.  **Personality Dataset (Multiclass Classification)**: Kaggle Personality Dataset classifying text into Extrovert, Introvert, and Ambivert (10K–20K samples).
+5.  **AG News (Multiclass Classification)**: Balanced dataset with World, Sports, Business, and Technology news (120,000 entries).
+6.  **Hindi Dataset (Multilingual Evaluation)**: 15,000 sentiment examples to evaluate cross-lingual robustness.
+
+---
+
+## 📈 Key Results & Findings
+
+### Defense Effectiveness (on SST-2 with BERT)
+| Defense Model | TextFooler ASR | DeepWordBug ASR | UATA ASR |
+| :--- | :---: | :---: | :---: |
+| **Without Defense** | 0.81 | 0.52 | 0.09 |
+| **MaskPure** | 0.42 | 0.32 | 0.09 |
+| **AttentionDrop** | 0.64 | 0.46 | 0.09 |
+| **Paraphrase Defense** | 0.76 | 0.29 | 0.09 |
+
+### TECA vs. Baseline Attacks (ASR comparison)
+*   **Near-Perfect Success**: TECA achieves near-perfect Attack Success Rate (ASR) of **0.96 to 1.00** across SST-2, IMDb, Imbalanced, and AG News datasets, consistently outperforming TextFooler, SCPN, and GANs.
+*   **Personality Dataset Failure**: On the Personality dataset, TECA achieves **0.00 ASR** across all models (BERT, RoBERTa, ELECTRA) because TECA's syntactic transformations do not capture the subtle semantic markers required for personality classification.
+*   **Multilingual (Hindi) Failure**: On the Hindi dataset, the ASR is **0.00**. This is due to Out-of-Vocabulary (OOV) tokens, tokenizer vocabulary mismatch, and model training bias towards English data.
 
 ---
 
